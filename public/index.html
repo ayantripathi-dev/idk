@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Game Studio - ForgeGUI & Lemonade & Nilo Platform</title>
+  <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="app-container">
+    <header class="navbar">
+      <div class="logo-container">
+        <span class="logo-icon">⚡</span>
+        <h1>AI Game Studio</h1>
+        <span class="badge">ForgeGUI / Lemonade / Nilo</span>
+      </div>
+      <nav class="nav-tabs">
+        <button class="nav-btn active" data-tab="tab-script">📜 Script Studio</button>
+        <button class="nav-btn" data-tab="tab-gui">🎨 GUI Builder</button>
+        <button class="nav-btn" data-tab="tab-asset">🖼️ Asset Prompter</button>
+        <button class="nav-btn" data-tab="tab-projects">📁 Saved Projects</button>
+        <button class="nav-btn" data-tab="tab-settings">⚙️ Settings (API)</button>
+      </nav>
+    </header>
+
+    <main class="content-area">
+      <!-- 1. Luau Script Studio Tab -->
+      <section id="tab-script" class="tab-content active">
+        <div class="panel-layout">
+          <div class="panel-sidebar">
+            <h2>Luau Script Generator</h2>
+            <p class="subtitle">Generate & debug Luau scripts for Roblox Studio</p>
+
+            <div class="form-group">
+              <label for="script-type">Script Type</label>
+              <select id="script-type" class="form-control">
+                <option value="ServerScript">ServerScript (Script)</option>
+                <option value="LocalScript">LocalScript</option>
+                <option value="ModuleScript">ModuleScript</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="script-prompt">Feature Description</label>
+              <textarea id="script-prompt" class="form-control" rows="6" placeholder="Describe the gameplay feature (e.g. Leaderboard coins system, Inventory system with potions, Sword combat mechanism)"></textarea>
+            </div>
+
+            <button id="btn-generate-script" class="btn btn-primary">⚡ Generate Luau Script</button>
+          </div>
+
+          <div class="panel-main">
+            <div class="code-header">
+              <span id="script-status">Ready</span>
+              <button id="btn-copy-script" class="btn btn-secondary btn-sm">📋 Copy Code</button>
+              <button id="btn-save-script" class="btn btn-outline btn-sm">💾 Save Project</button>
+            </div>
+            <pre class="code-block"><code id="script-output">-- Generated Luau code will appear here...</code></pre>
+            <div class="explanation-box" id="script-explanation">
+              <strong>Explanation:</strong> Select parameters and generate a script to view details.
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 2. GUI Builder Tab -->
+      <section id="tab-gui" class="tab-content">
+        <div class="panel-layout">
+          <div class="panel-sidebar">
+            <h2>Visual GUI Builder</h2>
+            <p class="subtitle">Design game UI and generate Luau creation code</p>
+
+            <div class="form-group">
+              <label for="gui-prompt">GUI Panel Description</label>
+              <textarea id="gui-prompt" class="form-control" rows="5" placeholder="e.g. Shop Menu with claim reward button, Inventory HUD, Health & Energy Bar"></textarea>
+            </div>
+
+            <div class="form-group">
+              <label for="gui-theme">UI Theme</label>
+              <select id="gui-theme" class="form-control">
+                <option value="Dark Gaming">Dark Gaming (Cyberpunk)</option>
+                <option value="Minimal Light">Minimal Light</option>
+                <option value="Neon Glow">Neon Glow</option>
+              </select>
+            </div>
+
+            <button id="btn-generate-gui" class="btn btn-primary">🎨 Generate GUI & Luau Code</button>
+          </div>
+
+          <div class="panel-main">
+            <div class="split-view">
+              <div class="preview-panel">
+                <h3>Live GUI Preview Canvas</h3>
+                <div id="gui-canvas" class="gui-canvas">
+                  <div class="canvas-placeholder">Generated GUI preview will display here</div>
+                </div>
+              </div>
+              <div class="code-panel">
+                <div class="code-header">
+                  <span>Luau UI Instantiation Code</span>
+                  <button id="btn-copy-gui-code" class="btn btn-secondary btn-sm">📋 Copy UI Code</button>
+                </div>
+                <pre class="code-block"><code id="gui-code-output">-- Luau UI creation code will appear here...</code></pre>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 3. Asset Prompter Tab -->
+      <section id="tab-asset" class="tab-content">
+        <div class="panel-layout">
+          <div class="panel-sidebar">
+            <h2>Game Asset & Thumbnail Prompter</h2>
+            <p class="subtitle">Create AI visual prompts for Roblox, Unreal, & Unity</p>
+
+            <div class="form-group">
+              <label for="asset-type">Asset Type</label>
+              <select id="asset-type" class="form-control">
+                <option value="Roblox Game Thumbnail">Roblox Game Thumbnail</option>
+                <option value="Game Icon / Badge">Game Icon / Badge</option>
+                <option value="3D Model Asset">3D Model Asset (Weapon/Prop)</option>
+                <option value="UI HUD Icon">UI HUD Icon</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="asset-style">Art Style</label>
+              <select id="asset-style" class="form-control">
+                <option value="Vibrant 3D Render">Vibrant 3D Render</option>
+                <option value="Anime / Cartoon">Anime / Cartoon</option>
+                <option value="Photorealistic Unreal Engine 5">Photorealistic UE5</option>
+                <option value="Pixel Art">Pixel Art</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="asset-description">Description</label>
+              <textarea id="asset-description" class="form-control" rows="5" placeholder="e.g. Epic lava dragon sword floating in a mystical temple with glowing rune effects"></textarea>
+            </div>
+
+            <button id="btn-generate-asset" class="btn btn-primary">✨ Generate Optimized Prompt</button>
+          </div>
+
+          <div class="panel-main">
+            <div class="prompt-card">
+              <h3>Optimized Positive Prompt</h3>
+              <textarea id="asset-prompt-output" class="form-control code-font" rows="5" readonly></textarea>
+              <button id="btn-copy-asset-prompt" class="btn btn-secondary btn-sm">📋 Copy Prompt</button>
+            </div>
+
+            <div class="prompt-card">
+              <h3>Negative Prompt</h3>
+              <textarea id="asset-negative-output" class="form-control code-font" rows="3" readonly></textarea>
+            </div>
+
+            <div class="meta-card">
+              <span id="asset-aspect-ratio">Aspect Ratio: -</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 4. Saved Projects Tab -->
+      <section id="tab-projects" class="tab-content">
+        <div class="projects-container">
+          <h2>Saved Projects & Exported Assets</h2>
+          <button id="btn-refresh-projects" class="btn btn-secondary btn-sm">🔄 Refresh List</button>
+          <div id="projects-list" class="projects-grid">
+            <p>No saved projects yet.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- 5. Settings Tab (Nilo Model Base URL & API Key) -->
+      <section id="tab-settings" class="tab-content">
+        <div class="settings-container">
+          <h2>Model & API Configuration (Nilo / OpenAI Settings)</h2>
+          <p class="subtitle">Set your custom model base URL and API key to connect external AI services</p>
+
+          <div class="form-group">
+            <label for="model-base-url">Model Base URL</label>
+            <input type="text" id="model-base-url" class="form-control" placeholder="https://api.openai.com/v1">
+          </div>
+
+          <div class="form-group">
+            <label for="model-api-key">API Key</label>
+            <input type="password" id="model-api-key" class="form-control" placeholder="sk-...">
+          </div>
+
+          <div class="form-group">
+            <label for="model-name">Model Name</label>
+            <input type="text" id="model-name" class="form-control" value="gpt-4o">
+          </div>
+
+          <button id="btn-save-settings" class="btn btn-primary">💾 Save Settings</button>
+          <div id="settings-status" class="status-msg"></div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
