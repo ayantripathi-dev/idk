@@ -5,6 +5,7 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
+app.use(express.static(__dirname));
 app.use(express.static(path.join(__dirname, 'public')));
 
 // In-memory store for settings and projects
@@ -54,7 +55,6 @@ app.post('/api/generate-script', (req, res) => {
   const type = scriptType || 'ServerScript';
   const timestamp = new Date().toISOString();
 
-  // Template generators based on prompt keywords
   let generatedCode = '';
   let explanation = '';
 
@@ -279,6 +279,11 @@ app.post('/api/projects', (req, res) => {
 
   savedProjects.push(newProject);
   res.status(201).json({ success: true, project: newProject });
+});
+
+// Serve index.html for root path
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'index.html'));
 });
 
 // Start Server
