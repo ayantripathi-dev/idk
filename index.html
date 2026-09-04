@@ -303,6 +303,7 @@
     .status-msg {
       font-size: 13px;
       color: var(--accent-success);
+      min-height: 20px;
     }
 
     .projects-container {
@@ -517,11 +518,11 @@
       <section id="tab-settings" class="tab-content">
         <div class="settings-container">
           <h2>Model & API Configuration (Nilo / OpenAI Settings)</h2>
-          <p class="subtitle">Set your custom model base URL and API key to connect external AI services</p>
+          <p class="subtitle">Set your custom model base URL and API key to connect external AI services directly in the browser</p>
 
           <div class="form-group">
             <label for="model-base-url">Model Base URL</label>
-            <input type="text" id="model-base-url" class="form-control" placeholder="https://api.openai.com/v1">
+            <input type="text" id="model-base-url" class="form-control" placeholder="https://attended-receptors-reading-involvement.trycloudflare.com/v1">
           </div>
 
           <div class="form-group">
@@ -559,50 +560,86 @@
         });
       });
 
-      // Settings: Load and Save
+      // Settings Storage in localStorage
       const baseUrlInput = document.getElementById('model-base-url');
       const apiKeyInput = document.getElementById('model-api-key');
       const modelNameInput = document.getElementById('model-name');
       const saveSettingsBtn = document.getElementById('btn-save-settings');
       const settingsStatus = document.getElementById('settings-status');
 
-      async function loadSettings() {
-        try {
-          const res = await fetch('/api/config');
-          const data = await res.json();
-          if (data) {
-            baseUrlInput.value = data.baseUrl || '';
-            modelNameInput.value = data.modelName || 'gpt-4o';
-          }
-        } catch (err) {
-          console.error('Failed to load settings:', err);
-        }
+      function loadSettings() {
+        const savedBaseUrl = localStorage.getItem('ai_studio_base_url') || 'https://attended-receptors-reading-involvement.trycloudflare.com/v1';
+        const savedApiKey = localStorage.getItem('ai_studio_api_key') || '';
+        const savedModelName = localStorage.getItem('ai_studio_model_name') || 'gpt-4o';
+
+        baseUrlInput.value = savedBaseUrl;
+        apiKeyInput.value = savedApiKey;
+        modelNameInput.value = savedModelName;
       }
 
-      saveSettingsBtn.addEventListener('click', async () => {
-        try {
-          const payload = {
-            baseUrl: baseUrlInput.value.trim(),
-            apiKey: apiKeyInput.value.trim(),
-            modelName: modelNameInput.value.trim()
-          };
+      saveSettingsBtn.addEventListener('click', () => {
+        const baseUrl = baseUrlInput.value.trim().replace(/\/+$/, '');
+        const apiKey = apiKeyInput.value.trim();
+        const modelName = modelNameInput.value.trim() || 'gpt-4o';
 
-          const res = await fetch('/api/config', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-          });
-          const data = await res.json();
-          if (data.success) {
-            settingsStatus.textContent = 'Settings updated successfully!';
-            setTimeout(() => { settingsStatus.textContent = ''; }, 3000);
-          }
-        } catch (err) {
-          settingsStatus.textContent = 'Error saving settings.';
-        }
+        localStorage.setItem('ai_studio_base_url', baseUrl);
+        localStorage.setItem('ai_studio_api_key', apiKey);
+        localStorage.setItem('ai_studio_model_name', modelName);
+
+        settingsStatus.style.color = '#a6e3a1';
+        settingsStatus.textContent = 'Settings saved successfully in browser!';
+        setTimeout(() => { settingsStatus.textContent = ''; }, 3000);
       });
 
       loadSettings();
+
+      // Client-side Direct API LLM Handler
+      async function callDirectLLM(prompt, systemMsg) {
+        const baseUrl = (localStorage.getItem('ai_studio_base_url') || '').trim().replace(/\/+$/, '');
+        const apiKey = (localStorage.getItem('ai_studio_api_key') || '').trim();
+        const modelName = localStorage.getItem('ai_studio_model_name') || 'gpt-4o';
+
+        if (!baseUrl || !apiKey) {
+          return null;
+        }
+
+        let endpoint = baseUrl;
+        if (!endpoint.endsWith('/chat/completions')) {
+          if (endpoint.endsWith('/v1')) {
+            endpoint += '/chat/completions';
+          } else {
+            endpoint += '/v1/chat/completions';
+          }
+        }
+
+        try {
+          const response = await fetch(endpoint, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${apiKey}`
+            },
+            body: JSON.stringify({
+              model: modelName,
+              messages: [
+                { role: 'system', content: systemMsg || 'You are an AI Roblox Luau coding expert.' },
+                { role: 'user', content: prompt }
+              ],
+              temperature: 0.7
+            })
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+            if (data.choices && data.choices.length > 0 && data.choices[0].message) {
+              return data.choices[0].message.content;
+            }
+          }
+        } catch (err) {
+          console.warn('Direct LLM fetch error, falling back to browser template generator:', err);
+        }
+        return null;
+      }
 
       // Tab 1: Script Generator
       const generateScriptBtn = document.getElementById('btn-generate-script');
@@ -614,8 +651,8 @@
       const saveScriptBtn = document.getElementById('btn-save-script');
 
       generateScriptBtn.addEventListener('click', async () => {
-        const prompt = scriptPromptInput.value.trim();
-        if (!prompt) {
+        const promptText = scriptPromptInput.value.trim();
+        if (!promptText) {
           alert('Please enter a description for the script.');
           return;
         }
@@ -623,26 +660,37 @@
         generateScriptBtn.disabled = true;
         generateScriptBtn.textContent = 'Generating...';
 
-        try {
-          const res = await fetch('/api/generate-script', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ prompt, scriptType: scriptTypeSelect.value })
-          });
-          const data = await res.json();
+        const type = scriptTypeSelect.value;
+        const directResult = await callDirectLLM(
+          `Write a Roblox Luau ${type} for: ${promptText}`,
+          'You are a Luau expert for Roblox Studio. Return clean working code.'
+        );
 
-          if (data.success) {
-            scriptOutput.textContent = data.code;
-            scriptExplanation.innerHTML = `<strong>Explanation:</strong> ${data.explanation}`;
+        if (directResult) {
+          scriptOutput.textContent = directResult;
+          scriptExplanation.innerHTML = `<strong>Explanation:</strong> Generated directly via configured LLM model (${localStorage.getItem('ai_studio_model_name')}).`;
+        } else {
+          // Client-side template fallback
+          let code = '';
+          let explanation = '';
+
+          if (promptText.toLowerCase().includes('inventory')) {
+            code = `-- Luau Inventory System (${type})\nlocal Players = game:GetService("Players")\nlocal InventoryData = {}\n\nlocal function setupInventory(player)\n    InventoryData[player.UserId] = { Coins = 100, Items = {"Starter Sword", "Potion"} }\n    print("Inventory initialized for " .. player.Name)\nend\nPlayers.PlayerAdded:Connect(setupInventory)`;
+            explanation = 'Generates a robust player inventory system template.';
+          } else if (promptText.toLowerCase().includes('leaderboard') || promptText.toLowerCase().includes('leaderstats')) {
+            code = `-- Luau Leaderstats System (${type})\nlocal Players = game:GetService("Players")\n\nlocal function onPlayerAdded(player)\n    local leaderstats = Instance.new("Folder")\n    leaderstats.Name = "leaderstats"\n    leaderstats.Parent = player\n\n    local coins = Instance.new("IntValue")\n    coins.Name = "Coins"\n    coins.Value = 0\n    coins.Parent = leaderstats\nend\nPlayers.PlayerAdded:Connect(onPlayerAdded)`;
+            explanation = 'Creates standard Roblox leaderstats folder and Coins tracker.';
           } else {
-            scriptOutput.textContent = '-- Error: ' + (data.error || 'Failed to generate script');
+            code = `-- Luau Custom Feature (${type})\n-- Prompt: ${promptText}\n\nlocal ReplicatedStorage = game:GetService("ReplicatedStorage")\nprint("Executing feature: ${promptText}")\n\nreturn function()\n    return true\nend`;
+            explanation = `Generated custom Luau template module for feature: "${promptText}".`;
           }
-        } catch (err) {
-          scriptOutput.textContent = '-- Error connecting to server.';
-        } finally {
-          generateScriptBtn.disabled = false;
-          generateScriptBtn.textContent = '⚡ Generate Luau Script';
+
+          scriptOutput.textContent = code;
+          scriptExplanation.innerHTML = `<strong>Explanation:</strong> ${explanation}`;
         }
+
+        generateScriptBtn.disabled = false;
+        generateScriptBtn.textContent = '⚡ Generate Luau Script';
       });
 
       copyScriptBtn.addEventListener('click', () => {
@@ -651,7 +699,7 @@
         setTimeout(() => { copyScriptBtn.textContent = '📋 Copy Code'; }, 2000);
       });
 
-      saveScriptBtn.addEventListener('click', async () => {
+      saveScriptBtn.addEventListener('click', () => {
         const code = scriptOutput.textContent;
         if (!code || code.startsWith('-- Generated')) {
           alert('Generate a script first before saving.');
@@ -661,20 +709,9 @@
         const name = prompt('Enter project name:', 'Luau Script - ' + scriptTypeSelect.value);
         if (!name) return;
 
-        try {
-          const res = await fetch('/api/projects', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ name, type: 'Script', content: code })
-          });
-          const data = await res.json();
-          if (data.success) {
-            alert('Project saved successfully!');
-            loadProjects();
-          }
-        } catch (err) {
-          alert('Failed to save project.');
-        }
+        saveProjectToStorage(name, 'Script', code);
+        alert('Project saved successfully!');
+        loadProjects();
       });
 
       // Tab 2: GUI Builder
@@ -685,34 +722,30 @@
       const guiCodeOutput = document.getElementById('gui-code-output');
       const copyGuiCodeBtn = document.getElementById('btn-copy-gui-code');
 
-      generateGuiBtn.addEventListener('click', async () => {
-        const prompt = guiPromptInput.value.trim();
-        if (!prompt) {
+      generateGuiBtn.addEventListener('click', () => {
+        const promptText = guiPromptInput.value.trim();
+        if (!promptText) {
           alert('Please enter a GUI panel description.');
           return;
         }
 
-        generateGuiBtn.disabled = true;
-        generateGuiBtn.textContent = 'Generating...';
+        const selectedTheme = guiThemeSelect.value;
+        const luauCode = `-- Roblox Studio UI Generation Code\n-- Theme: ${selectedTheme} | Description: ${promptText}\n\nlocal Players = game:GetService("Players")\nlocal player = Players.LocalPlayer\nlocal playerGui = player:WaitForChild("PlayerGui")\n\nlocal screenGui = Instance.new("ScreenGui")\nscreenGui.Name = "AIGeneratedGUI"\nscreenGui.Parent = playerGui\n\nlocal mainFrame = Instance.new("Frame")\nmainFrame.Name = "MainPanel"\nmainFrame.Size = UDim2.new(0, 400, 0, 300)\nmainFrame.Position = UDim2.new(0.5, -200, 0.5, -150)\nmainFrame.BackgroundColor3 = Color3.fromHex("1e1e2e")\nmainFrame.Parent = screenGui\n\nlocal titleLabel = Instance.new("TextLabel")\ntitleLabel.Text = "${promptText}"\ntitleLabel.Size = UDim2.new(1, -20, 0, 40)\ntitleLabel.Position = UDim2.new(0, 10, 0, 10)\ntitleLabel.TextColor3 = Color3.fromHex("cdd6f4")\ntitleLabel.Parent = mainFrame`;
 
-        try {
-          const res = await fetch('/api/generate-gui', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ prompt, theme: guiThemeSelect.value })
-          });
-          const data = await res.json();
-
-          if (data.success) {
-            guiCodeOutput.textContent = data.luauCode;
-            renderGuiCanvasPreview(data.guiSpecs);
-          }
-        } catch (err) {
-          guiCodeOutput.textContent = '-- Error generating GUI code.';
-        } finally {
-          generateGuiBtn.disabled = false;
-          generateGuiBtn.textContent = '🎨 Generate GUI & Luau Code';
-        }
+        guiCodeOutput.textContent = luauCode;
+        renderGuiCanvasPreview({
+          title: promptText,
+          elements: [{
+            type: 'Frame',
+            backgroundColor: '#1e1e2e',
+            borderColor: '#89b4fa',
+            size: { x: 380, y: 260 },
+            children: [
+              { type: 'TextLabel', text: promptText.toUpperCase(), textColor: '#cdd6f4' },
+              { type: 'TextButton', text: 'Interact / Claim', backgroundColor: '#a6e3a1', textColor: '#11111b' }
+            ]
+          }]
+        });
       });
 
       function renderGuiCanvasPreview(specs) {
@@ -739,7 +772,6 @@
                 title.textContent = child.text;
                 title.style.color = child.textColor;
                 title.style.textAlign = 'center';
-                title.style.fontFamily = 'Inter, sans-serif';
                 frame.appendChild(title);
               } else if (child.type === 'TextButton') {
                 const btn = document.createElement('button');
@@ -776,33 +808,19 @@
       const assetAspectRatio = document.getElementById('asset-aspect-ratio');
       const copyAssetPromptBtn = document.getElementById('btn-copy-asset-prompt');
 
-      generateAssetBtn.addEventListener('click', async () => {
+      generateAssetBtn.addEventListener('click', () => {
         const description = assetDescInput.value.trim();
         if (!description) {
           alert('Please enter a description for the asset.');
           return;
         }
 
-        try {
-          const res = await fetch('/api/generate-asset-prompt', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              assetType: assetTypeSelect.value,
-              style: assetStyleSelect.value,
-              description
-            })
-          });
-          const data = await res.json();
+        const type = assetTypeSelect.value;
+        const style = assetStyleSelect.value;
 
-          if (data.success) {
-            assetPromptOutput.value = data.optimizedPrompt;
-            assetNegativeOutput.value = data.negativePrompt;
-            assetAspectRatio.textContent = `Recommended Aspect Ratio: ${data.recommendedAspectRatio}`;
-          }
-        } catch (err) {
-          alert('Error generating asset prompt.');
-        }
+        assetPromptOutput.value = `High quality ${type}, ${style} style. ${description}, professional lighting, Unreal Engine 5 aesthetic, Roblox game asset art, 8k resolution`;
+        assetNegativeOutput.value = `blurry, low quality, distorted geometry, grainy, watermark`;
+        assetAspectRatio.textContent = `Recommended Aspect Ratio: ${type.includes('Thumbnail') ? '16:9' : '1:1'}`;
       });
 
       copyAssetPromptBtn.addEventListener('click', () => {
@@ -811,32 +829,38 @@
         setTimeout(() => { copyAssetPromptBtn.textContent = '📋 Copy Prompt'; }, 2000);
       });
 
-      // Tab 4: Saved Projects
+      // Tab 4: Saved Projects in localStorage
       const projectsList = document.getElementById('projects-list');
       const refreshProjectsBtn = document.getElementById('btn-refresh-projects');
 
-      async function loadProjects() {
-        try {
-          const res = await fetch('/api/projects');
-          const data = await res.json();
+      function saveProjectToStorage(name, type, content) {
+        const projects = JSON.parse(localStorage.getItem('ai_studio_projects') || '[]');
+        projects.push({
+          id: 'proj_' + Date.now(),
+          name,
+          type,
+          content,
+          createdAt: new Date().toISOString()
+        });
+        localStorage.setItem('ai_studio_projects', JSON.stringify(projects));
+      }
 
-          if (data && data.projects && data.projects.length > 0) {
-            projectsList.innerHTML = '';
-            data.projects.forEach(proj => {
-              const card = document.createElement('div');
-              card.className = 'project-card';
-              card.innerHTML = `
-                <h4>${proj.name}</h4>
-                <span class="project-type">${proj.type} • ${new Date(proj.createdAt).toLocaleDateString()}</span>
-                <pre><code>${proj.content}</code></pre>
-              `;
-              projectsList.appendChild(card);
-            });
-          } else {
-            projectsList.innerHTML = '<p>No saved projects yet.</p>';
-          }
-        } catch (err) {
-          projectsList.innerHTML = '<p>Error loading projects.</p>';
+      function loadProjects() {
+        const projects = JSON.parse(localStorage.getItem('ai_studio_projects') || '[]');
+        if (projects.length > 0) {
+          projectsList.innerHTML = '';
+          projects.forEach(proj => {
+            const card = document.createElement('div');
+            card.className = 'project-card';
+            card.innerHTML = `
+              <h4>${proj.name}</h4>
+              <span class="project-type">${proj.type} • ${new Date(proj.createdAt).toLocaleDateString()}</span>
+              <pre><code>${proj.content}</code></pre>
+            `;
+            projectsList.appendChild(card);
+          });
+        } else {
+          projectsList.innerHTML = '<p>No saved projects yet.</p>';
         }
       }
 
