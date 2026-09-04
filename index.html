@@ -1,0 +1,872 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Game Studio - ForgeGUI & Lemonade & Nilo Platform</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-dark: #11111b;
+      --bg-panel: #1e1e2e;
+      --bg-sidebar: #181825;
+      --bg-input: #313244;
+      --accent-primary: #cba6f7;
+      --accent-secondary: #89b4fa;
+      --accent-success: #a6e3a1;
+      --text-main: #cdd6f4;
+      --text-muted: #a6adc8;
+      --border-color: #45475a;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    .app-container {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+    }
+
+    .navbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 24px;
+      background-color: var(--bg-sidebar);
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .logo-container {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .logo-icon {
+      font-size: 24px;
+    }
+
+    .logo-container h1 {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--accent-primary);
+    }
+
+    .badge {
+      background-color: var(--bg-input);
+      color: var(--accent-secondary);
+      font-size: 11px;
+      padding: 4px 8px;
+      border-radius: 12px;
+      border: 1px solid var(--border-color);
+    }
+
+    .nav-tabs {
+      display: flex;
+      gap: 8px;
+    }
+
+    .nav-btn {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      padding: 8px 16px;
+      font-size: 14px;
+      font-weight: 600;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .nav-btn:hover {
+      background-color: var(--bg-input);
+      color: var(--text-main);
+    }
+
+    .nav-btn.active {
+      background-color: var(--accent-primary);
+      color: var(--bg-dark);
+    }
+
+    .content-area {
+      flex: 1;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .tab-content {
+      display: none;
+      height: 100%;
+      padding: 20px;
+      overflow-y: auto;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    .panel-layout {
+      display: grid;
+      grid-template-columns: 320px 1fr;
+      gap: 20px;
+      height: 100%;
+    }
+
+    .panel-sidebar {
+      background-color: var(--bg-sidebar);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .subtitle {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-top: -8px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .form-group label {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+
+    .form-control {
+      background-color: var(--bg-input);
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      padding: 10px 12px;
+      border-radius: 6px;
+      font-size: 14px;
+      outline: none;
+      font-family: inherit;
+    }
+
+    .form-control:focus {
+      border-color: var(--accent-secondary);
+    }
+
+    textarea.form-control {
+      resize: vertical;
+    }
+
+    .code-font {
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .btn {
+      padding: 10px 18px;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: opacity 0.2s ease;
+    }
+
+    .btn:hover {
+      opacity: 0.9;
+    }
+
+    .btn-primary {
+      background-color: var(--accent-secondary);
+      color: var(--bg-dark);
+    }
+
+    .btn-secondary {
+      background-color: var(--bg-input);
+      color: var(--text-main);
+      border: 1px solid var(--border-color);
+    }
+
+    .btn-outline {
+      background-color: transparent;
+      color: var(--accent-success);
+      border: 1px solid var(--accent-success);
+    }
+
+    .btn-sm {
+      padding: 6px 12px;
+      font-size: 12px;
+    }
+
+    .panel-main {
+      background-color: var(--bg-panel);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    .code-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .code-block {
+      background-color: var(--bg-dark);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 16px;
+      flex: 1;
+      overflow: auto;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      line-height: 1.5;
+      color: var(--accent-success);
+    }
+
+    .explanation-box {
+      background-color: var(--bg-sidebar);
+      border: 1px solid var(--border-color);
+      padding: 12px 16px;
+      border-radius: 6px;
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    .split-view {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      height: 100%;
+    }
+
+    .preview-panel, .code-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      height: 100%;
+    }
+
+    .gui-canvas {
+      background-color: var(--bg-dark);
+      border: 2px dashed var(--border-color);
+      border-radius: 8px;
+      flex: 1;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .canvas-placeholder {
+      color: var(--text-muted);
+      font-size: 14px;
+    }
+
+    .prompt-card {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .settings-container {
+      max-width: 600px;
+      margin: 0 auto;
+      background-color: var(--bg-panel);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .status-msg {
+      font-size: 13px;
+      color: var(--accent-success);
+      min-height: 20px;
+    }
+
+    .projects-container {
+      max-width: 900px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .projects-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 16px;
+    }
+
+    .project-card {
+      background-color: var(--bg-panel);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .project-card h4 {
+      color: var(--accent-secondary);
+    }
+
+    .project-card .project-type {
+      font-size: 12px;
+      color: var(--accent-primary);
+    }
+
+    .project-card pre {
+      background-color: var(--bg-dark);
+      padding: 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      max-height: 100px;
+      overflow: hidden;
+    }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <header class="navbar">
+      <div class="logo-container">
+        <span class="logo-icon">⚡</span>
+        <h1>AI Game Studio</h1>
+        <span class="badge">ForgeGUI / Lemonade / Nilo</span>
+      </div>
+      <nav class="nav-tabs">
+        <button class="nav-btn active" data-tab="tab-script">📜 Script Studio</button>
+        <button class="nav-btn" data-tab="tab-gui">🎨 GUI Builder</button>
+        <button class="nav-btn" data-tab="tab-asset">🖼️ Asset Prompter</button>
+        <button class="nav-btn" data-tab="tab-projects">📁 Saved Projects</button>
+        <button class="nav-btn" data-tab="tab-settings">⚙️ Settings (API)</button>
+      </nav>
+    </header>
+
+    <main class="content-area">
+      <!-- 1. Luau Script Studio Tab -->
+      <section id="tab-script" class="tab-content active">
+        <div class="panel-layout">
+          <div class="panel-sidebar">
+            <h2>Luau Script Generator</h2>
+            <p class="subtitle">Generate & debug Luau scripts for Roblox Studio</p>
+
+            <div class="form-group">
+              <label for="script-type">Script Type</label>
+              <select id="script-type" class="form-control">
+                <option value="ServerScript">ServerScript (Script)</option>
+                <option value="LocalScript">LocalScript</option>
+                <option value="ModuleScript">ModuleScript</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="script-prompt">Feature Description</label>
+              <textarea id="script-prompt" class="form-control" rows="6" placeholder="Describe the gameplay feature (e.g. Leaderboard coins system, Inventory system with potions, Sword combat mechanism)"></textarea>
+            </div>
+
+            <button id="btn-generate-script" class="btn btn-primary">⚡ Generate Luau Script</button>
+          </div>
+
+          <div class="panel-main">
+            <div class="code-header">
+              <span id="script-status">Ready</span>
+              <button id="btn-copy-script" class="btn btn-secondary btn-sm">📋 Copy Code</button>
+              <button id="btn-save-script" class="btn btn-outline btn-sm">💾 Save Project</button>
+            </div>
+            <pre class="code-block"><code id="script-output">-- Generated Luau code will appear here...</code></pre>
+            <div class="explanation-box" id="script-explanation">
+              <strong>Explanation:</strong> Select parameters and generate a script to view details.
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 2. GUI Builder Tab -->
+      <section id="tab-gui" class="tab-content">
+        <div class="panel-layout">
+          <div class="panel-sidebar">
+            <h2>Visual GUI Builder</h2>
+            <p class="subtitle">Design game UI and generate Luau creation code</p>
+
+            <div class="form-group">
+              <label for="gui-prompt">GUI Panel Description</label>
+              <textarea id="gui-prompt" class="form-control" rows="5" placeholder="e.g. Shop Menu with claim reward button, Inventory HUD, Health & Energy Bar"></textarea>
+            </div>
+
+            <div class="form-group">
+              <label for="gui-theme">UI Theme</label>
+              <select id="gui-theme" class="form-control">
+                <option value="Dark Gaming">Dark Gaming (Cyberpunk)</option>
+                <option value="Minimal Light">Minimal Light</option>
+                <option value="Neon Glow">Neon Glow</option>
+              </select>
+            </div>
+
+            <button id="btn-generate-gui" class="btn btn-primary">🎨 Generate GUI & Luau Code</button>
+          </div>
+
+          <div class="panel-main">
+            <div class="split-view">
+              <div class="preview-panel">
+                <h3>Live GUI Preview Canvas</h3>
+                <div id="gui-canvas" class="gui-canvas">
+                  <div class="canvas-placeholder">Generated GUI preview will display here</div>
+                </div>
+              </div>
+              <div class="code-panel">
+                <div class="code-header">
+                  <span>Luau UI Instantiation Code</span>
+                  <button id="btn-copy-gui-code" class="btn btn-secondary btn-sm">📋 Copy UI Code</button>
+                </div>
+                <pre class="code-block"><code id="gui-code-output">-- Luau UI creation code will appear here...</code></pre>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 3. Asset Prompter Tab -->
+      <section id="tab-asset" class="tab-content">
+        <div class="panel-layout">
+          <div class="panel-sidebar">
+            <h2>Game Asset & Thumbnail Prompter</h2>
+            <p class="subtitle">Create AI visual prompts for Roblox, Unreal, & Unity</p>
+
+            <div class="form-group">
+              <label for="asset-type">Asset Type</label>
+              <select id="asset-type" class="form-control">
+                <option value="Roblox Game Thumbnail">Roblox Game Thumbnail</option>
+                <option value="Game Icon / Badge">Game Icon / Badge</option>
+                <option value="3D Model Asset">3D Model Asset (Weapon/Prop)</option>
+                <option value="UI HUD Icon">UI HUD Icon</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="asset-style">Art Style</label>
+              <select id="asset-style" class="form-control">
+                <option value="Vibrant 3D Render">Vibrant 3D Render</option>
+                <option value="Anime / Cartoon">Anime / Cartoon</option>
+                <option value="Photorealistic Unreal Engine 5">Photorealistic UE5</option>
+                <option value="Pixel Art">Pixel Art</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="asset-description">Description</label>
+              <textarea id="asset-description" class="form-control" rows="5" placeholder="e.g. Epic lava dragon sword floating in a mystical temple with glowing rune effects"></textarea>
+            </div>
+
+            <button id="btn-generate-asset" class="btn btn-primary">✨ Generate Optimized Prompt</button>
+          </div>
+
+          <div class="panel-main">
+            <div class="prompt-card">
+              <h3>Optimized Positive Prompt</h3>
+              <textarea id="asset-prompt-output" class="form-control code-font" rows="5" readonly></textarea>
+              <button id="btn-copy-asset-prompt" class="btn btn-secondary btn-sm">📋 Copy Prompt</button>
+            </div>
+
+            <div class="prompt-card">
+              <h3>Negative Prompt</h3>
+              <textarea id="asset-negative-output" class="form-control code-font" rows="3" readonly></textarea>
+            </div>
+
+            <div class="meta-card">
+              <span id="asset-aspect-ratio">Aspect Ratio: -</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 4. Saved Projects Tab -->
+      <section id="tab-projects" class="tab-content">
+        <div class="projects-container">
+          <h2>Saved Projects & Exported Assets</h2>
+          <button id="btn-refresh-projects" class="btn btn-secondary btn-sm">🔄 Refresh List</button>
+          <div id="projects-list" class="projects-grid">
+            <p>No saved projects yet.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- 5. Settings Tab (Nilo Model Base URL & API Key) -->
+      <section id="tab-settings" class="tab-content">
+        <div class="settings-container">
+          <h2>Model & API Configuration (Nilo / OpenAI Settings)</h2>
+          <p class="subtitle">Set your custom model base URL and API key to connect external AI services directly in the browser</p>
+
+          <div class="form-group">
+            <label for="model-base-url">Model Base URL</label>
+            <input type="text" id="model-base-url" class="form-control" placeholder="https://attended-receptors-reading-involvement.trycloudflare.com/v1">
+          </div>
+
+          <div class="form-group">
+            <label for="model-api-key">API Key</label>
+            <input type="password" id="model-api-key" class="form-control" placeholder="sk-...">
+          </div>
+
+          <div class="form-group">
+            <label for="model-name">Model Name</label>
+            <input type="text" id="model-name" class="form-control" value="gpt-4o">
+          </div>
+
+          <button id="btn-save-settings" class="btn btn-primary">💾 Save Settings</button>
+          <div id="settings-status" class="status-msg"></div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      // Navigation Tabs Logic
+      const navBtns = document.querySelectorAll('.nav-btn');
+      const tabContents = document.querySelectorAll('.tab-content');
+
+      navBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+          const tabId = btn.getAttribute('data-tab');
+
+          navBtns.forEach(b => b.classList.remove('active'));
+          tabContents.forEach(t => t.classList.remove('active'));
+
+          btn.classList.add('active');
+          document.getElementById(tabId).classList.add('active');
+        });
+      });
+
+      // Settings Storage in localStorage
+      const baseUrlInput = document.getElementById('model-base-url');
+      const apiKeyInput = document.getElementById('model-api-key');
+      const modelNameInput = document.getElementById('model-name');
+      const saveSettingsBtn = document.getElementById('btn-save-settings');
+      const settingsStatus = document.getElementById('settings-status');
+
+      function loadSettings() {
+        const savedBaseUrl = localStorage.getItem('ai_studio_base_url') || 'https://attended-receptors-reading-involvement.trycloudflare.com/v1';
+        const savedApiKey = localStorage.getItem('ai_studio_api_key') || '';
+        const savedModelName = localStorage.getItem('ai_studio_model_name') || 'gpt-4o';
+
+        baseUrlInput.value = savedBaseUrl;
+        apiKeyInput.value = savedApiKey;
+        modelNameInput.value = savedModelName;
+      }
+
+      saveSettingsBtn.addEventListener('click', () => {
+        const baseUrl = baseUrlInput.value.trim().replace(/\/+$/, '');
+        const apiKey = apiKeyInput.value.trim();
+        const modelName = modelNameInput.value.trim() || 'gpt-4o';
+
+        localStorage.setItem('ai_studio_base_url', baseUrl);
+        localStorage.setItem('ai_studio_api_key', apiKey);
+        localStorage.setItem('ai_studio_model_name', modelName);
+
+        settingsStatus.style.color = '#a6e3a1';
+        settingsStatus.textContent = 'Settings saved successfully in browser!';
+        setTimeout(() => { settingsStatus.textContent = ''; }, 3000);
+      });
+
+      loadSettings();
+
+      // Client-side Direct API LLM Handler
+      async function callDirectLLM(prompt, systemMsg) {
+        const baseUrl = (localStorage.getItem('ai_studio_base_url') || '').trim().replace(/\/+$/, '');
+        const apiKey = (localStorage.getItem('ai_studio_api_key') || '').trim();
+        const modelName = localStorage.getItem('ai_studio_model_name') || 'gpt-4o';
+
+        if (!baseUrl || !apiKey) {
+          return null;
+        }
+
+        let endpoint = baseUrl;
+        if (!endpoint.endsWith('/chat/completions')) {
+          if (endpoint.endsWith('/v1')) {
+            endpoint += '/chat/completions';
+          } else {
+            endpoint += '/v1/chat/completions';
+          }
+        }
+
+        try {
+          const response = await fetch(endpoint, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${apiKey}`
+            },
+            body: JSON.stringify({
+              model: modelName,
+              messages: [
+                { role: 'system', content: systemMsg || 'You are an AI Roblox Luau coding expert.' },
+                { role: 'user', content: prompt }
+              ],
+              temperature: 0.7
+            })
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+            if (data.choices && data.choices.length > 0 && data.choices[0].message) {
+              return data.choices[0].message.content;
+            }
+          }
+        } catch (err) {
+          console.warn('Direct LLM fetch error, falling back to browser template generator:', err);
+        }
+        return null;
+      }
+
+      // Tab 1: Script Generator
+      const generateScriptBtn = document.getElementById('btn-generate-script');
+      const scriptPromptInput = document.getElementById('script-prompt');
+      const scriptTypeSelect = document.getElementById('script-type');
+      const scriptOutput = document.getElementById('script-output');
+      const scriptExplanation = document.getElementById('script-explanation');
+      const copyScriptBtn = document.getElementById('btn-copy-script');
+      const saveScriptBtn = document.getElementById('btn-save-script');
+
+      generateScriptBtn.addEventListener('click', async () => {
+        const promptText = scriptPromptInput.value.trim();
+        if (!promptText) {
+          alert('Please enter a description for the script.');
+          return;
+        }
+
+        generateScriptBtn.disabled = true;
+        generateScriptBtn.textContent = 'Generating...';
+
+        const type = scriptTypeSelect.value;
+        const directResult = await callDirectLLM(
+          `Write a Roblox Luau ${type} for: ${promptText}`,
+          'You are a Luau expert for Roblox Studio. Return clean working code.'
+        );
+
+        if (directResult) {
+          scriptOutput.textContent = directResult;
+          scriptExplanation.innerHTML = `<strong>Explanation:</strong> Generated directly via configured LLM model (${localStorage.getItem('ai_studio_model_name')}).`;
+        } else {
+          // Client-side template fallback
+          let code = '';
+          let explanation = '';
+
+          if (promptText.toLowerCase().includes('inventory')) {
+            code = `-- Luau Inventory System (${type})\nlocal Players = game:GetService("Players")\nlocal InventoryData = {}\n\nlocal function setupInventory(player)\n    InventoryData[player.UserId] = { Coins = 100, Items = {"Starter Sword", "Potion"} }\n    print("Inventory initialized for " .. player.Name)\nend\nPlayers.PlayerAdded:Connect(setupInventory)`;
+            explanation = 'Generates a robust player inventory system template.';
+          } else if (promptText.toLowerCase().includes('leaderboard') || promptText.toLowerCase().includes('leaderstats')) {
+            code = `-- Luau Leaderstats System (${type})\nlocal Players = game:GetService("Players")\n\nlocal function onPlayerAdded(player)\n    local leaderstats = Instance.new("Folder")\n    leaderstats.Name = "leaderstats"\n    leaderstats.Parent = player\n\n    local coins = Instance.new("IntValue")\n    coins.Name = "Coins"\n    coins.Value = 0\n    coins.Parent = leaderstats\nend\nPlayers.PlayerAdded:Connect(onPlayerAdded)`;
+            explanation = 'Creates standard Roblox leaderstats folder and Coins tracker.';
+          } else {
+            code = `-- Luau Custom Feature (${type})\n-- Prompt: ${promptText}\n\nlocal ReplicatedStorage = game:GetService("ReplicatedStorage")\nprint("Executing feature: ${promptText}")\n\nreturn function()\n    return true\nend`;
+            explanation = `Generated custom Luau template module for feature: "${promptText}".`;
+          }
+
+          scriptOutput.textContent = code;
+          scriptExplanation.innerHTML = `<strong>Explanation:</strong> ${explanation}`;
+        }
+
+        generateScriptBtn.disabled = false;
+        generateScriptBtn.textContent = '⚡ Generate Luau Script';
+      });
+
+      copyScriptBtn.addEventListener('click', () => {
+        navigator.clipboard.writeText(scriptOutput.textContent);
+        copyScriptBtn.textContent = '✓ Copied!';
+        setTimeout(() => { copyScriptBtn.textContent = '📋 Copy Code'; }, 2000);
+      });
+
+      saveScriptBtn.addEventListener('click', () => {
+        const code = scriptOutput.textContent;
+        if (!code || code.startsWith('-- Generated')) {
+          alert('Generate a script first before saving.');
+          return;
+        }
+
+        const name = prompt('Enter project name:', 'Luau Script - ' + scriptTypeSelect.value);
+        if (!name) return;
+
+        saveProjectToStorage(name, 'Script', code);
+        alert('Project saved successfully!');
+        loadProjects();
+      });
+
+      // Tab 2: GUI Builder
+      const generateGuiBtn = document.getElementById('btn-generate-gui');
+      const guiPromptInput = document.getElementById('gui-prompt');
+      const guiThemeSelect = document.getElementById('gui-theme');
+      const guiCanvas = document.getElementById('gui-canvas');
+      const guiCodeOutput = document.getElementById('gui-code-output');
+      const copyGuiCodeBtn = document.getElementById('btn-copy-gui-code');
+
+      generateGuiBtn.addEventListener('click', () => {
+        const promptText = guiPromptInput.value.trim();
+        if (!promptText) {
+          alert('Please enter a GUI panel description.');
+          return;
+        }
+
+        const selectedTheme = guiThemeSelect.value;
+        const luauCode = `-- Roblox Studio UI Generation Code\n-- Theme: ${selectedTheme} | Description: ${promptText}\n\nlocal Players = game:GetService("Players")\nlocal player = Players.LocalPlayer\nlocal playerGui = player:WaitForChild("PlayerGui")\n\nlocal screenGui = Instance.new("ScreenGui")\nscreenGui.Name = "AIGeneratedGUI"\nscreenGui.Parent = playerGui\n\nlocal mainFrame = Instance.new("Frame")\nmainFrame.Name = "MainPanel"\nmainFrame.Size = UDim2.new(0, 400, 0, 300)\nmainFrame.Position = UDim2.new(0.5, -200, 0.5, -150)\nmainFrame.BackgroundColor3 = Color3.fromHex("1e1e2e")\nmainFrame.Parent = screenGui\n\nlocal titleLabel = Instance.new("TextLabel")\ntitleLabel.Text = "${promptText}"\ntitleLabel.Size = UDim2.new(1, -20, 0, 40)\ntitleLabel.Position = UDim2.new(0, 10, 0, 10)\ntitleLabel.TextColor3 = Color3.fromHex("cdd6f4")\ntitleLabel.Parent = mainFrame`;
+
+        guiCodeOutput.textContent = luauCode;
+        renderGuiCanvasPreview({
+          title: promptText,
+          elements: [{
+            type: 'Frame',
+            backgroundColor: '#1e1e2e',
+            borderColor: '#89b4fa',
+            size: { x: 380, y: 260 },
+            children: [
+              { type: 'TextLabel', text: promptText.toUpperCase(), textColor: '#cdd6f4' },
+              { type: 'TextButton', text: 'Interact / Claim', backgroundColor: '#a6e3a1', textColor: '#11111b' }
+            ]
+          }]
+        });
+      });
+
+      function renderGuiCanvasPreview(specs) {
+        guiCanvas.innerHTML = '';
+        if (!specs || !specs.elements) return;
+
+        specs.elements.forEach(elem => {
+          const frame = document.createElement('div');
+          frame.style.width = elem.size.x + 'px';
+          frame.style.height = elem.size.y + 'px';
+          frame.style.backgroundColor = elem.backgroundColor;
+          frame.style.border = `2px solid ${elem.borderColor}`;
+          frame.style.borderRadius = '12px';
+          frame.style.padding = '16px';
+          frame.style.display = 'flex';
+          frame.style.flexDirection = 'column';
+          frame.style.justifyContent = 'space-between';
+          frame.style.boxShadow = '0 8px 24px rgba(0,0,0,0.5)';
+
+          if (elem.children) {
+            elem.children.forEach(child => {
+              if (child.type === 'TextLabel') {
+                const title = document.createElement('h3');
+                title.textContent = child.text;
+                title.style.color = child.textColor;
+                title.style.textAlign = 'center';
+                frame.appendChild(title);
+              } else if (child.type === 'TextButton') {
+                const btn = document.createElement('button');
+                btn.textContent = child.text;
+                btn.style.backgroundColor = child.backgroundColor;
+                btn.style.color = child.textColor;
+                btn.style.border = 'none';
+                btn.style.padding = '10px';
+                btn.style.borderRadius = '8px';
+                btn.style.fontWeight = 'bold';
+                btn.style.cursor = 'pointer';
+                frame.appendChild(btn);
+              }
+            });
+          }
+
+          guiCanvas.appendChild(frame);
+        });
+      }
+
+      copyGuiCodeBtn.addEventListener('click', () => {
+        navigator.clipboard.writeText(guiCodeOutput.textContent);
+        copyGuiCodeBtn.textContent = '✓ Copied!';
+        setTimeout(() => { copyGuiCodeBtn.textContent = '📋 Copy UI Code'; }, 2000);
+      });
+
+      // Tab 3: Asset Prompter
+      const generateAssetBtn = document.getElementById('btn-generate-asset');
+      const assetTypeSelect = document.getElementById('asset-type');
+      const assetStyleSelect = document.getElementById('asset-style');
+      const assetDescInput = document.getElementById('asset-description');
+      const assetPromptOutput = document.getElementById('asset-prompt-output');
+      const assetNegativeOutput = document.getElementById('asset-negative-output');
+      const assetAspectRatio = document.getElementById('asset-aspect-ratio');
+      const copyAssetPromptBtn = document.getElementById('btn-copy-asset-prompt');
+
+      generateAssetBtn.addEventListener('click', () => {
+        const description = assetDescInput.value.trim();
+        if (!description) {
+          alert('Please enter a description for the asset.');
+          return;
+        }
+
+        const type = assetTypeSelect.value;
+        const style = assetStyleSelect.value;
+
+        assetPromptOutput.value = `High quality ${type}, ${style} style. ${description}, professional lighting, Unreal Engine 5 aesthetic, Roblox game asset art, 8k resolution`;
+        assetNegativeOutput.value = `blurry, low quality, distorted geometry, grainy, watermark`;
+        assetAspectRatio.textContent = `Recommended Aspect Ratio: ${type.includes('Thumbnail') ? '16:9' : '1:1'}`;
+      });
+
+      copyAssetPromptBtn.addEventListener('click', () => {
+        navigator.clipboard.writeText(assetPromptOutput.value);
+        copyAssetPromptBtn.textContent = '✓ Copied!';
+        setTimeout(() => { copyAssetPromptBtn.textContent = '📋 Copy Prompt'; }, 2000);
+      });
+
+      // Tab 4: Saved Projects in localStorage
+      const projectsList = document.getElementById('projects-list');
+      const refreshProjectsBtn = document.getElementById('btn-refresh-projects');
+
+      function saveProjectToStorage(name, type, content) {
+        const projects = JSON.parse(localStorage.getItem('ai_studio_projects') || '[]');
+        projects.push({
+          id: 'proj_' + Date.now(),
+          name,
+          type,
+          content,
+          createdAt: new Date().toISOString()
+        });
+        localStorage.setItem('ai_studio_projects', JSON.stringify(projects));
+      }
+
+      function loadProjects() {
+        const projects = JSON.parse(localStorage.getItem('ai_studio_projects') || '[]');
+        if (projects.length > 0) {
+          projectsList.innerHTML = '';
+          projects.forEach(proj => {
+            const card = document.createElement('div');
+            card.className = 'project-card';
+            card.innerHTML = `
+              <h4>${proj.name}</h4>
+              <span class="project-type">${proj.type} • ${new Date(proj.createdAt).toLocaleDateString()}</span>
+              <pre><code>${proj.content}</code></pre>
+            `;
+            projectsList.appendChild(card);
+          });
+        } else {
+          projectsList.innerHTML = '<p>No saved projects yet.</p>';
+        }
+      }
+
+      refreshProjectsBtn.addEventListener('click', loadProjects);
+      loadProjects();
+    });
+  </script>
+</body>
+</html>
